@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.el_ghabghoub.core.Config;
 import com.example.el_ghabghoub.databinding.FragmentHomeBinding;
 
 import com.example.el_ghabghoub.core.WifiComm;
@@ -19,6 +20,8 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
+import java.util.Objects;
 
 public class HomeFragment extends Fragment {
 
@@ -38,33 +41,26 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Check location permission before accessing WiFi SSID
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
-        } else {
-            showWifiStatus();
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                showWifiStatus();
-            } else {
-                binding.statusConnection.setText("Location permission denied");
-            }
-        }
-    }
-
-    private void showWifiStatus() {
-        /*#### make sure that every device has its own SSID #### */
         WifiComm wifiComm = WifiComm.getInstance(requireContext());
         String ssid = wifiComm.getSSID();
-        if (ssid != Config.WATERING_DEVICE_SSID) {
+        // Remove quotes and trim whitespace from SSID
+        if (ssid != null) {
+            ssid = ssid.replace("\"", "").trim();
+        }
+        if (!Objects.equals(ssid, Config.WATERING_DEVICE_SSID)) {
             // Display the WiFi status
             binding.statusConnection.setText("You are Connected to " + ssid + ", please make sure to connect to: " + Config.WATERING_DEVICE_SSID);
+            //blind the other fields
+            binding.statusStart.setVisibility(View.GONE);
+            binding.statusStartTime.setVisibility(View.GONE);
+            binding.statusWateringOn.setVisibility(View.GONE);
+            binding.statusWateringOnTime.setVisibility(View.GONE);
+            binding.statusWateringOff.setVisibility(View.GONE);
+            binding.statusWateringOffTime.setVisibility(View.GONE);
+            binding.statusCycles.setVisibility(View.GONE);
+            binding.statusRemainingCycles.setVisibility(View.GONE);
+            binding.button.setVisibility(View.GONE);
+
         }
         else {
             binding.statusConnection.setText("You are connected to: " + Config.WATERING_DEVICE_SSID);
