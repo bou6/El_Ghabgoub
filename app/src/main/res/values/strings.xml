@@ -19,4 +19,8 @@
     <string name="status_remaining_cycles">Remaining cycles</string>
     <string name="stop_text">Stop</string>
     <string name="start_text">Start</string>
+    <string name="please_make_sure_to_connect_to">Please make sure to connect to:</string>
+    <string name="connected_to">Connected to: %1$s</string>
+    <string name="wifi_not_connected">WiFi not connected</string>
+
 </resources>

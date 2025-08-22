@@ -3,10 +3,15 @@ package com.example.el_ghabghoub.core;
 import android.content.Context;
 import android.net.wifi.WifiManager;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+
 public class WifiComm {
+    private enum Protocol { HTTP, HTTPS };
     private WifiManager wifiManager;
     private String device_ssid;
     private static WifiComm instance;
+    private Protocol protocol=Protocol.HTTP;
 
     private WifiComm(Context context) {
         wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
@@ -28,4 +33,69 @@ public class WifiComm {
         System.out.println(">>> 2 SSID: " + device_ssid);
        return device_ssid;
     }
+
+    /**
+     * Performs an HTTP GET request to the given URL and returns the response via callback.
+     * @param command, the command to send to the server
+     * @param callback  The callback to receive the response or error
+     */
+    /*
+    public void httpGetRequest(final String command, final HttpCallback callback) {
+        new Thread(() -> {
+            try {
+                //java.net.URL url = new java.net.URL(this.url + command);
+                java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                int responseCode = conn.getResponseCode();
+                if (responseCode == java.net.HttpURLConnection.HTTP_OK) {
+                    java.io.BufferedReader in = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = in.readLine()) != null) {
+                        response.append(line);
+                    }
+                    in.close();
+                    if (callback != null) callback.onSuccess(response.toString());
+                } else {
+                    if (callback != null) callback.onError("HTTP error code: " + responseCode);
+                }
+                conn.disconnect();
+            } catch (Exception e) {
+                if (callback != null) callback.onError(e.toString());
+            }
+        }).start();
+    }
+    */
+
+
+    /**
+     * Callback interface for HTTP responses.
+     */
+    public interface HttpCallback {
+        void onSuccess(String response);
+        void onError(String error);
+    }
+
+    public String httpGetSync(String urlString, int timeoutMillis) throws IOException, MalformedURLException {
+        java.net.URL url = new java.net.URL(urlString);
+        java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+        conn.setConnectTimeout(timeoutMillis); // connection timeout
+        conn.setReadTimeout(timeoutMillis);    // read timeout
+        int responseCode = conn.getResponseCode();
+        if (responseCode == java.net.HttpURLConnection.HTTP_OK) {
+            java.io.BufferedReader in = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream()));
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = in.readLine()) != null) {
+                response.append(line);
+            }
+            in.close();
+            conn.disconnect();
+            return response.toString();
+        } else {
+            conn.disconnect();
+            throw new IOException("HTTP error code: " + responseCode);
+        }
+}
 }
