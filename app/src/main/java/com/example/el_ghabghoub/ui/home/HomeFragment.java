@@ -34,6 +34,7 @@ import java.util.Objects;
 public class HomeFragment extends Fragment {
     private FragmentHomeBinding binding;
     private final Handler handler = new Handler(Looper.getMainLooper());
+
     private final Runnable periodicTask = new Runnable() {
         @Override
         public void run() {
@@ -41,9 +42,11 @@ public class HomeFragment extends Fragment {
             handler.postDelayed(this, 1000);
         }
     };
+
     /**
      * Call this method to start the periodic task from your activity or fragment.
      */
+
     public void startPeriodicTask() {
         handler.post(periodicTask);
     }
@@ -51,23 +54,48 @@ public class HomeFragment extends Fragment {
     /**
      * Call this method to stop the periodic task.
      */
+
     public void stopPeriodicTask() {
         handler.removeCallbacks(periodicTask);
+    }
+
+    private String convertTimeToString(int time)
+    {
+        // convert the time received to days:hours:min
+        int days = time / 86400;
+        int hours = (time % 86400) / 3600;
+        int minutes = (time % 3600) / 60;
+        return String.format("Day(s): %2d \nHour(s): %02d\nMin(s): %02d ", days, hours, minutes);
     }
 
     /**
      * The command to be called every second. Update your frame or logic here.
      */
+
     private void performPeriodicCommand() {
         new Thread(() -> {
             Response response = Commands.statusCmd(requireContext());
             // Update UI on main thread
             handler.post(() -> {
-                // Example: update a TextView with the response
                 if (response != null && response.success) {
-                    binding.statusConnection.setText(response.data != null ? response.data.toString() : "Success");
-                } else {
-                    binding.statusConnection.setText("Error: " + (response != null ? response.message : "Unknown error"));
+                    if (Objects.equals(response.state, "Idle"))
+                        binding.statusWateringText.setText(response.state);
+                    else{
+                        if (response.start_time>0)
+                            binding.statusWateringText.setText(R.string.watering_planned);
+                        if (response.current_watering_on>0)
+                            binding.statusWateringText.setText(R.string.watering_on);
+                        if (response.current_watering_off>0)
+                            binding.statusWateringText.setText(R.string.watering_off);
+                    }
+
+                    binding.statusStartTime.setText(convertTimeToString(response.start_time));
+                    binding.statusWateringOnTime.setText(convertTimeToString(response.current_watering_on));
+                    binding.statusWateringOffTime.setText(convertTimeToString(response.current_watering_off));
+                    binding.statusRemainingCycles.setText(String.valueOf(response.cycles));
+                }
+                else {
+                    binding.statusConnection.setText("Connection failed");
                 }
             });
         }).start();
@@ -86,6 +114,11 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
         WifiComm wifiComm = WifiComm.getInstance(requireContext());
         String ssid = wifiComm.getSSID();
         // Remove quotes and trim whitespace from SSID
@@ -108,13 +141,8 @@ public class HomeFragment extends Fragment {
             binding.button.setVisibility(View.GONE);
         } else {
             binding.statusConnection.setText(getString(R.string.connected_to, ssid));
+            startPeriodicTask();
         }
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        startPeriodicTask();
     }
 
     @Override
