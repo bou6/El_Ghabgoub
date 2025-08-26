@@ -27,10 +27,12 @@ public class WifiComm {
     public String getSSID() {
         if (wifiManager != null && wifiManager.isWifiEnabled()) {
             device_ssid = wifiManager.getConnectionInfo().getSSID();
-            //debug message
-            System.out.println(">>> 1 SSID: " + device_ssid);
         }
-        System.out.println(">>> 2 SSID: " + device_ssid);
+        // Remove quotes and trim whitespace from SSID
+        if (device_ssid != null) {
+            device_ssid = device_ssid.replace("\"", "").trim();
+        }
+        System.out.println(">>>  SSID: " + device_ssid);
        return device_ssid;
     }
 

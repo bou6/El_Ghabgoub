@@ -38,7 +38,7 @@ public class HomeFragment extends Fragment {
     private final Runnable periodicTask = new Runnable() {
         @Override
         public void run() {
-            performPeriodicCommand();
+            manageUi();
             handler.postDelayed(this, 1000);
         }
     };
@@ -68,38 +68,126 @@ public class HomeFragment extends Fragment {
         return String.format("Day(s): %2d \nHour(s): %02d\nMin(s): %02d ", days, hours, minutes);
     }
 
-    /**
-     * The command to be called every second. Update your frame or logic here.
-     */
-
-    private void performPeriodicCommand() {
-        new Thread(() -> {
-            Response response = Commands.statusCmd(requireContext());
-            // Update UI on main thread
-            handler.post(() -> {
-                if (response != null && response.success) {
-                    if (Objects.equals(response.state, "Idle"))
-                        binding.statusWateringText.setText(response.state);
-                    else{
-                        if (response.start_time>0)
-                            binding.statusWateringText.setText(R.string.watering_planned);
-                        if (response.current_watering_on>0)
-                            binding.statusWateringText.setText(R.string.watering_on);
-                        if (response.current_watering_off>0)
-                            binding.statusWateringText.setText(R.string.watering_off);
-                    }
-
-                    binding.statusStartTime.setText(convertTimeToString(response.start_time));
-                    binding.statusWateringOnTime.setText(convertTimeToString(response.current_watering_on));
-                    binding.statusWateringOffTime.setText(convertTimeToString(response.current_watering_off));
-                    binding.statusRemainingCycles.setText(String.valueOf(response.cycles));
-                }
-                else {
-                    binding.statusConnection.setText("Connection failed");
-                }
-            });
-        }).start();
+    private void handleNotConnectedState(String ssid)
+    {
+        handler.post(()->{
+            binding.statusConnection.setText(getString(R.string.connected_to,ssid));
+            binding.statusWatering.setVisibility(View.GONE);
+            binding.statusWateringText.setText(R.string.please_make_sure_to_connect_to);
+            //blind the other fields
+            binding.statusStart.setVisibility(View.GONE);
+            binding.statusStartTime.setVisibility(View.GONE);
+            binding.statusWateringOn.setVisibility(View.GONE);
+            binding.statusWateringOnTime.setVisibility(View.GONE);
+            binding.statusWateringOff.setVisibility(View.GONE);
+            binding.statusWateringOffTime.setVisibility(View.GONE);
+            binding.statusCycles.setVisibility(View.GONE);
+            binding.statusRemainingCycles.setVisibility(View.GONE);
+            binding.buttonStop.setVisibility(View.GONE);
+            binding.buttonSchedule.setVisibility(View.GONE);
+        });
     }
+
+    private void handleIdleState(String ssid, Response response)
+    {
+        handler.post(()->{
+            binding.statusConnection.setText(getString(R.string.connected_to,ssid));
+            binding.statusWatering.setVisibility(View.VISIBLE);
+            binding.statusWateringText.setText(response.state);
+            binding.statusStart.setVisibility(View.GONE);
+            binding.statusStartTime.setVisibility(View.GONE);
+            binding.statusWateringOnTime.setVisibility(View.GONE);
+            binding.statusWateringOffTime.setVisibility(View.GONE);
+            binding.statusRemainingCycles.setVisibility(View.GONE);
+            binding.statusWateringOn.setVisibility(View.GONE);
+            binding.statusWateringOff.setVisibility(View.GONE);
+            binding.statusCycles.setVisibility(View.GONE);
+            binding.statusRemainingCycles.setVisibility(View.GONE);
+            binding.buttonStop.setVisibility(View.GONE);
+            binding.buttonSchedule.setVisibility(View.VISIBLE);
+        });
+    }
+
+    private void handleWateringState(String ssid, Response response)
+    {
+        handler.post(()->{
+            binding.statusConnection.setText(getString(R.string.connected_to,ssid));
+            binding.statusWatering.setVisibility(View.VISIBLE);
+
+            if (response.start_time>0)
+                binding.statusWateringText.setText(R.string.watering_planned);
+            if (response.current_watering_on>0)
+                binding.statusWateringText.setText(R.string.watering_on);
+            if (response.current_watering_off>0)
+                binding.statusWateringText.setText(R.string.watering_off);
+
+            binding.statusStart.setVisibility(View.VISIBLE);
+            binding.statusStartTime.setVisibility(View.VISIBLE);
+            binding.statusWateringOnTime.setVisibility(View.VISIBLE);
+            binding.statusWateringOffTime.setVisibility(View.VISIBLE);
+            binding.statusRemainingCycles.setVisibility(View.VISIBLE);
+            binding.statusCycles.setVisibility(View.VISIBLE);
+
+            binding.statusStartTime.setText(convertTimeToString(response.start_time));
+            binding.statusWateringOnTime.setText(convertTimeToString(response.current_watering_on));
+            binding.statusWateringOffTime.setText(convertTimeToString(response.current_watering_off));
+            binding.statusRemainingCycles.setText(String.valueOf(response.cycles));
+
+            binding.buttonStop.setVisibility(View.VISIBLE);
+            binding.buttonSchedule.setVisibility(View.GONE);
+
+        });
+    }
+
+    private void handleUnknownError(String ssid, Response response)
+    {
+        handler.post(()->{
+            binding.statusConnection.setText(getString(R.string.connected_to,ssid));
+            binding.statusWatering.setVisibility(View.GONE);
+            binding.statusWateringText.setText(R.string.unknown_error);
+            binding.statusStartTime.setVisibility(View.GONE);
+            binding.statusWateringOnTime.setVisibility(View.GONE);
+            binding.statusWateringOffTime.setVisibility(View.GONE);
+            binding.statusRemainingCycles.setVisibility(View.GONE);
+            binding.statusStart.setVisibility(View.GONE);
+            binding.statusStartTime.setVisibility(View.GONE);
+            binding.statusWateringOnTime.setVisibility(View.GONE);
+            binding.statusWateringOffTime.setVisibility(View.GONE);
+            binding.statusCycles.setVisibility(View.GONE);
+            binding.statusRemainingCycles.setVisibility(View.GONE);
+            binding.buttonStop.setVisibility(View.GONE);
+            binding.buttonSchedule.setVisibility(View.GONE);
+        });
+    }
+
+    private void manageUi()
+    {
+    WifiComm wifiComm = WifiComm.getInstance(requireContext());
+    // check if status is Idle
+    new Thread(() -> {
+        // check if connected to the correct WiFi
+
+        String ssid = wifiComm.getSSID();
+
+        if (!Objects.equals(ssid, Config.WATERING_DEVICE_SSID)) {
+            handleNotConnectedState(ssid);
+            return;
+        }
+
+        Response response = Commands.statusCmd(requireContext());
+        if ((response == null) || (!response.success)) {
+            handleUnknownError(ssid,response);
+            return;
+        }
+
+        if (Objects.equals(response.state, "Idle")) {
+            handleIdleState(ssid,response);
+            return;
+        }
+        handleWateringState(ssid,response);
+
+    }).start();
+}
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -111,38 +199,9 @@ public class HomeFragment extends Fragment {
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
-    }
-
-    @Override
     public void onStart() {
         super.onStart();
-        WifiComm wifiComm = WifiComm.getInstance(requireContext());
-        String ssid = wifiComm.getSSID();
-        // Remove quotes and trim whitespace from SSID
-        if (ssid != null) {
-            ssid = ssid.replace("\"", "").trim();
-        }
-        if (!Objects.equals(ssid, Config.WATERING_DEVICE_SSID)) {
-            // Display the WiFi status using string resource with placeholder
-            String msg = getString(R.string.connected_to, ssid) + ", " + getString(R.string.please_make_sure_to_connect_to) + " " + Config.WATERING_DEVICE_SSID;
-            binding.statusConnection.setText(msg);
-            //blind the other fields
-            binding.statusStart.setVisibility(View.GONE);
-            binding.statusStartTime.setVisibility(View.GONE);
-            binding.statusWateringOn.setVisibility(View.GONE);
-            binding.statusWateringOnTime.setVisibility(View.GONE);
-            binding.statusWateringOff.setVisibility(View.GONE);
-            binding.statusWateringOffTime.setVisibility(View.GONE);
-            binding.statusCycles.setVisibility(View.GONE);
-            binding.statusRemainingCycles.setVisibility(View.GONE);
-            binding.button.setVisibility(View.GONE);
-        } else {
-            binding.statusConnection.setText(getString(R.string.connected_to, ssid));
-            startPeriodicTask();
-        }
+        startPeriodicTask() ;
     }
 
     @Override
