@@ -50,7 +50,7 @@ public class PlannerFragment extends Fragment {
     {
         handler.post(() -> {
             // show error message
-            String errorMessage = getString(R.string.unknown_error);
+            String errorMessage = "Unknown error";
             Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_SHORT).show();
         });
     }

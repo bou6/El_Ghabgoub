@@ -9,7 +9,11 @@
         android:id="@+id/nav_home"
         android:name="com.example.el_ghabghoub.ui.home.HomeFragment"
         android:label="@string/menu_home"
-        tools:layout="@layout/fragment_home" />
+        tools:layout="@layout/fragment_home">
+        <action
+            android:id="@+id/action_homeFragment_to_plannerFragment"
+            app:destination="@id/nav_planner" />
+    </fragment>
 
     <fragment
         android:id="@+id/nav_gallery"
@@ -22,4 +26,14 @@
         android:name="com.example.el_ghabghoub.ui.slideshow.SlideshowFragment"
         android:label="@string/menu_slideshow"
         tools:layout="@layout/fragment_slideshow" />
+
+    <fragment
+        android:id="@+id/nav_planner"
+        android:name="com.example.el_ghabghoub.ui.planner.PlannerFragment"
+        android:label="@string/menu_planner"
+        tools:layout="@layout/fragment_planner">
+        <action
+            android:id="@+id/action_plannerFragment_to_homeFragment"
+            app:destination="@id/nav_home" />
+        </fragment>
 </navigation>

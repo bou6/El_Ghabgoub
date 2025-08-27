@@ -1,16 +1,13 @@
 package com.example.el_ghabghoub.ui.home;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
 
 import com.example.el_ghabghoub.R;
 import com.example.el_ghabghoub.core.Config;
@@ -20,15 +17,14 @@ import com.example.el_ghabghoub.databinding.FragmentHomeBinding;
 import com.example.el_ghabghoub.core.WifiComm;
 import android.os.Handler;
 import android.os.Looper;
+import android.widget.Toast;
 
-import android.Manifest;
-import android.content.pm.PackageManager;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 
 import com.example.el_ghabghoub.core.Commands;
+import com.example.el_ghabghoub.ui.planner.PlannerFragment;
 
-import java.io.IOException;
 import java.util.Objects;
 
 public class HomeFragment extends Fragment {
@@ -43,17 +39,9 @@ public class HomeFragment extends Fragment {
         }
     };
 
-    /**
-     * Call this method to start the periodic task from your activity or fragment.
-     */
-
     public void startPeriodicTask() {
         handler.post(periodicTask);
     }
-
-    /**
-     * Call this method to stop the periodic task.
-     */
 
     public void stopPeriodicTask() {
         handler.removeCallbacks(periodicTask);
@@ -62,9 +50,9 @@ public class HomeFragment extends Fragment {
     private String convertTimeToString(int time)
     {
         // convert the time received to days:hours:min
-        int days = time / 86400;
-        int hours = (time % 86400) / 3600;
-        int minutes = (time % 3600) / 60;
+        int days = time / 1440;
+        int hours = (time % 1440)/60;
+        int minutes = time % 60;
         return String.format("Day(s): %2d \nHour(s): %02d\nMin(s): %02d ", days, hours, minutes);
     }
 
@@ -116,9 +104,9 @@ public class HomeFragment extends Fragment {
 
             if (response.start_time>0)
                 binding.statusWateringText.setText(R.string.watering_planned);
-            if (response.current_watering_on>0)
+            else if (response.current_watering_on>0)
                 binding.statusWateringText.setText(R.string.watering_on);
-            if (response.current_watering_off>0)
+            else if (response.current_watering_off>0)
                 binding.statusWateringText.setText(R.string.watering_off);
 
             binding.statusStart.setVisibility(View.VISIBLE);
@@ -196,6 +184,43 @@ public class HomeFragment extends Fragment {
         View root = binding.getRoot();
 
         return root;
+    }
+
+    public void scheduleBtnHandler() {
+        // Create the new fragment
+        PlannerFragment plannerFragment = new PlannerFragment();
+
+        NavController navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment_content_main);
+        navController.navigate(R.id.action_homeFragment_to_plannerFragment);
+    }
+
+    public void stopBtnHandler() {
+        WifiComm wifiComm = WifiComm.getInstance(requireContext());
+        new Thread(() -> {
+            // Stop the watering (network call)
+            Response response = Commands.stopCmd(requireContext());
+            // Update UI on main thread
+            handler.post(() -> {
+                if (response != null && response.success) {
+                    Toast.makeText(requireContext(), "Watering stopped", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(requireContext(), "Failed to stop watering", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }).start();
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        binding.buttonSchedule.setOnClickListener(v -> {
+            scheduleBtnHandler();
+        });
+
+        binding.buttonStop.setOnClickListener(v -> {
+            stopBtnHandler();
+        });
     }
 
     @Override
