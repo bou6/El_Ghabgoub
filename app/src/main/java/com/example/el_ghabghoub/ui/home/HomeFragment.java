@@ -53,7 +53,8 @@ public class HomeFragment extends Fragment {
         int days = time / 1440;
         int hours = (time % 1440)/60;
         int minutes = time % 60;
-        return String.format("Day(s): %2d \nHour(s): %02d\nMin(s): %02d ", days, hours, minutes);
+
+        return String.format(getString(R.string.time_format), days, hours, minutes);
     }
 
     private void handleNotConnectedState(String ssid)
@@ -168,7 +169,7 @@ public class HomeFragment extends Fragment {
             return;
         }
 
-        if (Objects.equals(response.state, "Idle")) {
+        if (Objects.equals(response.state, Config.IDLE_STR)) {
             handleIdleState(ssid,response);
             return;
         }
@@ -202,9 +203,9 @@ public class HomeFragment extends Fragment {
             // Update UI on main thread
             handler.post(() -> {
                 if (response != null && response.success) {
-                    Toast.makeText(requireContext(), "Watering stopped", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), getString(R.string.watering_stopped), Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(requireContext(), "Failed to stop watering", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), getString(R.string.unknown_error), Toast.LENGTH_SHORT).show();
                 }
             });
         }).start();

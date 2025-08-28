@@ -36,13 +36,8 @@ public class Response {
         Response response = null;
         try {
             JSONObject obj = new JSONObject(json);
-            boolean success;
             String success_string = obj.optString("status");
-            if (success_string.equals("success")) {
-                success = true;
-            } else {
-                success = false;
-            }
+            boolean success = "success".equals(success_string);
             String state = obj.optString("state");
             int cycles = obj.optInt("cycles");
             int current_watering_on = obj.optInt("current_watering_on");

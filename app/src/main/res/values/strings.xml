@@ -29,6 +29,8 @@
     <string name="watering_off">Watering is off</string>
     <string name="status_watering_on_text">Watering On</string>
     <string name="status_watering_off_text">Watering Off</string>
+    <string name="time_format">Day(s): %2d \nHour(s): %02d\nMin(s): %02d </string>
     <string name="unknown_error">Unknown Error</string>
+    <string name="watering_stopped">Watering stopped</string>
 
 </resources>
