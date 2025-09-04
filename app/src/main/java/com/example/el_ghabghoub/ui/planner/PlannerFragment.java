@@ -1,7 +1,5 @@
 package com.example.el_ghabghoub.ui.planner;
 
-import static android.os.Looper.getMainLooper;
-
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
@@ -9,10 +7,13 @@ import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.NumberPicker;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.util.Pair;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -22,6 +23,10 @@ import com.example.el_ghabghoub.core.Commands;
 import com.example.el_ghabghoub.core.Response;
 import com.example.el_ghabghoub.databinding.FragmentPlannerBinding;
 import com.example.el_ghabghoub.ui.home.HomeFragment;
+import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener;
+import com.google.android.material.timepicker.MaterialTimePicker;
+import com.google.android.material.timepicker.TimeFormat;
 
 public class PlannerFragment extends Fragment {
     private FragmentPlannerBinding binding;
@@ -68,6 +73,10 @@ public class PlannerFragment extends Fragment {
         NumberPicker wateringOffHourPicker = binding.npWatOffHour;
         NumberPicker wateringOffMinPicker = binding.npWatOffMin;
         NumberPicker cyclesPicker = binding.npNbCycle;
+        Button btnPickRange = binding.btnPickRange;
+        TextView tvSelectedRange = binding.tvSelectedRange;
+        Button btnPickTime = binding.btnPickTime;
+        TextView tvSelectedTime = binding.tvSelectedTime;
 
         startDayPicker.setMinValue(0);
         startDayPicker.setMaxValue(30);
@@ -89,6 +98,7 @@ public class PlannerFragment extends Fragment {
         wateringOffMinPicker.setMaxValue(59);
         cyclesPicker.setMinValue(1);
         cyclesPicker.setMaxValue(10);
+        
 
         Context context = requireContext();
 
@@ -119,6 +129,50 @@ public class PlannerFragment extends Fragment {
             });
             thread.start();
 
+        });
+
+        
+        btnPickRange.setOnClickListener(v -> {
+            // Build the Material Date Range Picker
+            MaterialDatePicker.Builder<Pair<Long, Long>> dateRangeBuilder =
+                    MaterialDatePicker.Builder.dateRangePicker();
+
+            dateRangeBuilder.setTitleText("Select Date Range");
+
+            final MaterialDatePicker<Pair<Long, Long>> materialDatePicker = dateRangeBuilder.build();
+
+            // Show picker
+            materialDatePicker.show(getParentFragmentManager(), "DATE_RANGE");
+
+            // Handle selection
+            materialDatePicker.addOnPositiveButtonClickListener(
+                    (MaterialPickerOnPositiveButtonClickListener<Pair<Long, Long>>) selection -> {
+                        // selection returns a Pair<Long, Long>
+                        String selected = materialDatePicker.getHeaderText();
+                        tvSelectedRange.setText("Selected Range: " + selected);
+                    }
+            );
+        });
+
+         btnPickTime.setOnClickListener(v -> {
+            // Build the Material Time Picker
+            MaterialTimePicker picker = new MaterialTimePicker.Builder()
+                    .setTimeFormat(TimeFormat.CLOCK_24H) // 24-hour format
+                    .setHour(12)  // default hour
+                    .setMinute(0) // default minute
+                    .setTitleText("Select Time")
+                    .build();
+
+            // Show picker
+            picker.show(getParentFragmentManager(), "DATE_RANGE");
+
+            // Handle selection
+            picker.addOnPositiveButtonClickListener(dialog -> {
+                int hour = picker.getHour();
+                int minute = picker.getMinute();
+                String selectedTime = String.format("%02d:%02d", hour, minute);
+                tvSelectedTime.setText("Selected Time: " + selectedTime);
+            });
         });
     }
 
