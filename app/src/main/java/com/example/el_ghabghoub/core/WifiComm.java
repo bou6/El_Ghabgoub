@@ -51,19 +51,20 @@ public class WifiComm {
         conn.setConnectTimeout(timeoutMillis); // connection timeout
         conn.setReadTimeout(timeoutMillis);    // read timeout
         int responseCode = conn.getResponseCode();
+
+        java.io.BufferedReader in = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream()));
+        StringBuilder response = new StringBuilder();
+        String line;
+        while ((line = in.readLine()) != null) {
+            response.append(line);
+        }
+        in.close();
+        conn.disconnect();
+
         if (responseCode == java.net.HttpURLConnection.HTTP_OK) {
-            java.io.BufferedReader in = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream()));
-            StringBuilder response = new StringBuilder();
-            String line;
-            while ((line = in.readLine()) != null) {
-                response.append(line);
-            }
-            in.close();
-            conn.disconnect();
             return response.toString();
         } else {
-            conn.disconnect();
-            throw new IOException("HTTP error code: " + responseCode);
+            throw new IOException("HTTP error code: " + responseCode + ", response: " + response.toString());
         }
 }
 }

@@ -32,6 +32,15 @@ public class Response {
         this.current_watering_off = 0;
     }
 
+    public Response(boolean success, String error) {
+        this.success = success;
+        this.state = error;
+        this.cycles = 0;
+        this.current_watering_on = 0;
+        this.start_time = 0;
+        this.current_watering_off = 0;
+    }
+
     public static Response parseResponse(String json) {
         Response response = null;
         try {
