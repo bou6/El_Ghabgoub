@@ -83,6 +83,10 @@ public class PlannerFragment extends Fragment {
             return false;
         }
 
+        if (repeatAfter <= 0) {
+            return false;
+        }
+
         // get the current time and test if it is less than the selected start time if start day is today
         long today = MaterialDatePicker.todayInUtcMilliseconds()/(1000*60);
         if (startDay == today) {
@@ -154,13 +158,15 @@ public class PlannerFragment extends Fragment {
             int startHour = (int)((startTimeMin - currentTimeMin) % (24 * 60)) / 60;
             int startMin = (int)((startTimeMin - currentTimeMin) % (24 * 60)) % 60;
             System.out.println(">>> selectedStartDayinMin: " + selectedStartDayinMin + ", todayinMin: " + todayinMin);
+            System.out.println(">>>> selectedEndDayinMin :"+ selectedEndDayinMin + ", endTimeMin: " + endTimeMin);
             System.out.println(">>> Calculated startDay: " + startDay + ", startHour: " + startHour + ", startMin: " + startMin);
             // log the calculated values
             System.out.println(">> Start Day: " + startDay + ", currentTimeMin: " + currentTimeMin + ", startTimeMin: " + startTimeMin);
             System.out.println(">> todayinMin: " + todayinMin + ", selectedStartDayinMin: " + selectedStartDayinMin + ", selectedStartHour: " + selectedStartHour + ", selectedStartMin: " + selectedStartMin);
 
-            //number of cycles = (end day - start day) / repeat after
-            int cycles = (int)((selectedEndDayinMin - selectedStartDayinMin) / repeatAfter) + 1;
+            int cycles = (int)((selectedEndDayinMin - selectedStartDayinMin) / (24*60*repeatAfter)) + 1;
+
+            System.out.println(">>>>> cycles: " + cycles);
 
             int wateringOffinMin = repeatAfter*24*60 - durationHour*60 - durationMin;
             if (wateringOffinMin < 0) wateringOffinMin = 0;
@@ -218,11 +224,14 @@ public class PlannerFragment extends Fragment {
         });
 
          btnPickTime.setOnClickListener(v -> {
+
+             // get the current time
+            Calendar now = Calendar.getInstance(TimeZone.getDefault());
             // Build the Material Time Picker
             MaterialTimePicker picker = new MaterialTimePicker.Builder()
                     .setTimeFormat(TimeFormat.CLOCK_24H) // 24-hour format
-                    .setHour(12)  // default hour
-                    .setMinute(0) // default minute
+                    .setHour(now.get(Calendar.HOUR_OF_DAY))  // default hour
+                    .setMinute(now.get(Calendar.MINUTE)+1) // default minute
                     .setTitleText("Select Time")
                     .build();
 

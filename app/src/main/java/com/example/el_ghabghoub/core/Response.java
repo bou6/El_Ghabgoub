@@ -13,6 +13,7 @@ public class Response {
     public int start_time;
     public int current_watering_off;
     public boolean success;
+    public String error;
 
     public Response(boolean success, String state, int cycles, int current_watering_on, int start_time, int current_watering_off) {
         this.success = success;
@@ -34,11 +35,12 @@ public class Response {
 
     public Response(boolean success, String error) {
         this.success = success;
-        this.state = error;
+        this.state = "Idle";
         this.cycles = 0;
         this.current_watering_on = 0;
         this.start_time = 0;
         this.current_watering_off = 0;
+        this.error = error;
     }
 
     public static Response parseResponse(String json) {
